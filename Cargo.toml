@@ -1,0 +1,15 @@
+[package]
+name = "sync_cow"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[profile.release]
+lto = "fat"
+
+[[example]]
+name = "write_and_read_thread"
+
+[[example]]
+name = "simple"
