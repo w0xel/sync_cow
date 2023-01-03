@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/sync_cow)](https://crates.io/crates/sync_cow)
 [![Docs.rs](https://docs.rs/sync_cow/badge.svg)](https://docs.rs/sync_cow)
-[![CI](https://github.com/w0xel/sync_cow/workflows/CI/badge.svg?branch=develop)](https://github.com/w0xel/sync_cow/actions?query=workflow%3ACI+branch%3Amain)
+[![CI](https://github.com/w0xel/sync_cow/actions/workflows/rust.yml/badge.svg)](https://github.com/w0xel/sync_cow/actions)
 ![Crates.io - License](https://img.shields.io/crates/l/sync_cow/0.0.1)
 
 [![GitHub](https://img.shields.io/static/v1?logo=GitHub&label=&message=%20&color=grey)](https://github.com/w0xel/sync_cow)
@@ -16,13 +16,13 @@ faster alternative to `std::sync::RwLock`. Especially scenarios with many concur
 heavily benefit from `SyncCow`. Reading is guaranteed to
 be lock-less and return immediately. Writing is only blocked by other write-accesses, never by
 any read-access. A `SyncCow` with only one writer and arbitrary readers will never block. 
-As SyncCow stores two copies of it's contained value and read values are handed out as
-std::sync::Arc, a program using SyncCow might have a higher memory-footprint compared to
-std::sync::RwLock.
+As `SyncCow` stores two copies of it's contained value and read values are handed out as
+`std::sync::Arc`, a program using SyncCow might have a higher memory-footprint compared to
+`std::sync::RwLock`.
 
 Note that readers might read outdated data when using the SyncCow,
 as writing and reading concurrently is possible.
-If that is indesireable consider std::sync::RwLock.
+If that is indesireable consider `std::sync::RwLock`.
 
 
 ## Installation
