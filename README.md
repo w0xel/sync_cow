@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/sync_cow)](https://crates.io/crates/sync_cow)
 [![Docs.rs](https://docs.rs/sync_cow/badge.svg)](https://docs.rs/sync_cow)
 [![CI](https://github.com/w0xel/sync_cow/actions/workflows/rust.yml/badge.svg)](https://github.com/w0xel/sync_cow/actions)
-![Crates.io - License](https://img.shields.io/crates/l/sync_cow/0.0.1)
+![Crates.io - License](https://img.shields.io/crates/l/sync_cow)
 
 [![GitHub](https://img.shields.io/static/v1?logo=GitHub&label=&message=%20&color=grey)](https://github.com/w0xel/sync_cow)
 [![open issues](https://img.shields.io/github/issues-raw/w0xel/sync_cow)](https://github.com/w0xel/sync_cow/issues)
