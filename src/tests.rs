@@ -6,8 +6,7 @@ use std::sync::RwLock;
 fn cow_faster_than_rwlock_nosleep() {
     let reader_sleep = Some(std::time::Duration::from_millis(5));
     let writer_sleep = Some(std::time::Duration::from_millis(10));
-    let (time_cow, read_count_cow) =
-        write_and_read_alot(true, 10, 100, reader_sleep, writer_sleep);
+    let (time_cow, read_count_cow) = write_and_read_alot(true, 10, 100, reader_sleep, writer_sleep);
     let (time_rwlock, read_count_rwlock) =
         write_and_read_alot(false, 10, 100, reader_sleep, writer_sleep);
 
@@ -88,9 +87,15 @@ fn write_and_read_alot(
         let cow_ref = cow_clone.as_ref();
         let rwlock_ref = rwlock_clone.as_ref();
         if use_cow {
-            assert!(*cow_ref.read().as_ref() == 5, "SyncCow has unexpected value");
+            assert!(
+                *cow_ref.read().as_ref() == 5,
+                "SyncCow has unexpected value"
+            );
         } else {
-            assert!(*rwlock_ref.read().unwrap() == 5, "SyncCow has unexpected value");
+            assert!(
+                *rwlock_ref.read().unwrap() == 5,
+                "SyncCow has unexpected value"
+            );
         }
         loop {
             let mut val = 0;
@@ -132,4 +137,23 @@ fn write_and_read_alot(
     }
     let read_count = *global_counter.lock().unwrap();
     (time, read_count)
+}
+
+// From https://github.com/w0xel/sync_cow/issues/1 by @Kritzefitz
+#[test]
+fn race() {
+    let sc = SyncCow::new(0usize);
+
+    std::thread::scope(|s| {
+        s.spawn(|| {
+            sc.edit(|v| *v += 1);
+            sc.edit(|v| *v += 1);
+            sc.edit(|v| *v += 1);
+            sc.edit(|v| *v += 1);
+        });
+
+        s.spawn(|| {
+            sc.read();
+        });
+    });
 }

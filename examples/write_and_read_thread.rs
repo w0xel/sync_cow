@@ -1,8 +1,8 @@
-use sync_cow::SyncCow;
-use std::sync::Arc;
 use std::any::Any;
+use std::sync::Arc;
+use sync_cow::SyncCow;
 
-fn main() -> Result<(),Box<dyn Any + Send>> {
+fn main() -> Result<(), Box<dyn Any + Send>> {
     let cow = Arc::new(SyncCow::new(5));
 
     // Arc is only needed to pass the ref to the threads
