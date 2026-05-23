@@ -4,7 +4,7 @@
 //! faster alternative to `std::sync::RwLock`. Especially scenarios with many concurrent readers
 //! heavily benefit from the SyncCow. Reading is guaranteed to
 //! be lock-less and return immediately. Writing is only blocked by other write-accesses, never by
-//! any read-access. A SyncCow with only one writer and arbitrary readers will never block. 
+//! any read-access. A SyncCow with only one writer and arbitrary readers will never block.
 //! As SyncCow stores two copies of it's contained value and read values are handed out as
 //! std::sync::Arc, a program using SyncCow might have a higher memory-footprint compared to
 //! std::sync::RwLock.
@@ -19,14 +19,14 @@
 #![doc = include_str!("../examples/write_and_read_thread.rs")]
 //! ```
 
-use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicPtr, AtomicUsize};
+use std::sync::atomic::Ordering::{Acquire, Relaxed, Release, SeqCst};
+use std::sync::atomic::{fence, AtomicPtr, AtomicUsize};
 use std::sync::{Arc, Mutex};
 
 #[cfg(test)]
 mod tests;
 
-/// Thread-safe clone-on-write container with lock-less reading. 
+/// Thread-safe clone-on-write container with lock-less reading.
 ///
 /// See crate documentation for a full code example
 pub struct SyncCow<T: Clone> {
@@ -73,21 +73,23 @@ impl<T: Clone> SyncCow<T> {
         let mut cloned = Box::new(Arc::new(obj.as_ref().clone()));
 
         // And let the user-provided callback edit it
-        edit_fn(&mut Arc::get_mut(cloned.as_mut()).unwrap());
+        edit_fn(Arc::get_mut(cloned.as_mut()).unwrap());
 
         // This releases the pointer of the Arc from the Box, such that it is not automatically freed
         let new_ptr = Box::into_raw(cloned);
 
         // Override the old ptr, let the previous "latest_ptr" still be read by late readers
-        let old_ptr = old_ptr.swap(new_ptr, Relaxed);
+        let old_ptr = old_ptr.swap(new_ptr, Release);
 
         // And wait until any late readers still reading the older ptr finished cloning the Arc
+        fence(SeqCst);
         while old_cnt.load(Relaxed) != 0 {
             std::thread::yield_now();
         }
+        fence(Acquire);
 
         // Now guide all readers to the newly updated Arc
-        self.latest.store((latest + 1) % 2, Relaxed);
+        self.latest.store((latest + 1) % 2, Release);
 
         // Ensures Arc pointed to by old_ptr will be released at return
         let _ = unsafe { Box::from_raw(old_ptr) };
@@ -110,7 +112,7 @@ impl<T: Clone> SyncCow<T> {
     /// assert_eq!(*cow.read(), 6); // Another read returns new value
     /// ```
     pub fn read(&self) -> Arc<T> {
-        let latest = self.latest.load(Relaxed);
+        let latest = self.latest.load(Acquire);
         // We want to read whatever has been updated last
         let (ptr, cnt) = match latest {
             RED => &self.atomic_red,
@@ -120,8 +122,9 @@ impl<T: Clone> SyncCow<T> {
 
         // Notify the writer we're cloning the Arc, so it waits before releasing it.
         cnt.fetch_add(1, Relaxed);
-        let arc = unsafe { &*ptr.load(Relaxed) }.clone();
-        cnt.fetch_sub(1, Relaxed);
+        fence(SeqCst);
+        let arc = unsafe { &*ptr.load(Acquire) }.clone();
+        cnt.fetch_sub(1, Release);
         arc
     }
 

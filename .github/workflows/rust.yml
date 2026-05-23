@@ -22,3 +22,13 @@ jobs:
       run: cargo test --verbose
     - name: Run doc tests
       run: cargo test --doc --verbose
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install nightly toolchain with miri
+      run: rustup toolchain install nightly-2026-05-04 --component miri
+    - name: Run miri tests
+      env:
+        MIRIFLAGS: '-Zmiri-many-seeds=0..512'
+      run: cargo +nightly-2026-05-04 miri test tests::race
